@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tube</title>
+<style>
+  body{margin:0;font-family:Arial,sans-serif;background:#111;color:#eee}
+  header{display:flex;gap:8px;align-items:center;padding:10px 14px;background:#1b1b1b;position:sticky;top:0}
+  header b{font-size:20px;cursor:pointer;color:#ff4d4d}
+  form{flex:1;display:flex;gap:6px}
+  input{flex:1;padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#eee;min-width:0}
+  button{padding:8px 12px;border-radius:6px;border:0;background:#333;color:#eee;cursor:pointer}
+  button:hover{background:#444}
+  main{padding:14px}
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+  .card{cursor:pointer}
+  .card img{width:100%;aspect-ratio:16/9;object-fit:cover;background:#222;border-radius:8px}
+  .card p{margin:6px 0 0;font-size:14px}
+  .card small{color:#999}
+  #watch{display:none}
+  #player{width:100%;max-width:900px;aspect-ratio:16/9;background:#000}
+  #player iframe,#player video{width:100%;height:100%;border:0}
+  #msg{color:#ffb3b3;white-space:pre-wrap}
+  #settings{display:none;background:#1b1b1b;padding:12px;border-radius:8px;margin-bottom:14px}
+  pre{background:#000;padding:8px;overflow:auto;max-height:200px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <b id="home">Tube</b>
+  <form id="f"><input id="q" placeholder="Search" autocomplete="off"><button>Search</button></form>
+  <button id="gear" type="button">Server</button>
+</header>
+<main>
+  <div id="settings">
+    <label>TubeRepair server URL<br>
+      <input id="server" value="https://tuberepair.uptimetrackers.com/" style="width:100%;margin-top:4px"></label>
+    <p><button id="save" type="button">Save</button></p>
+  </div>
+  <div id="msg"></div>
+  <div id="list"><div id="grid"></div></div>
+  <div id="watch">
+    <button id="back" type="button">&larr; Back</button>
+    <h2 id="vt"></h2>
+    <div id="player"></div>
+    <p><button id="alt" type="button">Try TubeRepair stream instead</button></p>
+  </div>
+</main>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var KEY="tube.server", DEF="https://tuberepair.uptimetrackers.com/";
+  var server=DEF;
+  try{server=localStorage.getItem(KEY)||DEF}catch(e){}
+  if(!/\/$/.test(server))server+="/";
+  $("server").value=server;
+  var curId=null;
+
+  function msg(t){$("msg").textContent=t||""}
+
+  function get(path){
+    var url=server+path;
+    return fetch(url).then(function(r){
+      return r.text().then(function(t){
+        if(!r.ok)throw new Error("HTTP "+r.status+" from "+url+"\n"+t.slice(0,300));
+        return t;
+      });
+    },function(){
+      throw new Error("Could not reach "+url+"\n(Likely a CORS block, or the server is down. Open the URL in a new tab to check.)");
+    });
+  }
+
+  // Parse either Atom XML or GData JSON into [{id,title,author,thumb}]
+  function parse(text){
+    var out=[],t=text.trim();
+    if(t.charAt(0)==="{"){
+      var j=JSON.parse(t),en=(j.feed&&j.feed.entry)||[];
+      en.forEach(function(e){
+        var id="",s=JSON.stringify(e.link||"")+JSON.stringify(e.id||"");
+        var m=/(?:v=|videos\/)([\w-]{11})/.exec(s);if(m)id=m[1];
+        var th=e.media$group&&e.media$group.media$thumbnail&&e.media$group.media$thumbnail[0];
+        if(id)out.push({id:id,title:(e.title&&e.title.$t)||id,
+          author:(e.author&&e.author[0]&&e.author[0].name.$t)||"",
+          thumb:th?th.url:"https://i.ytimg.com/vi/"+id+"/mqdefault.jpg"});
+      });
+      return out;
+    }
+    var doc=new DOMParser().parseFromString(t,"text/xml");
+    var en2=doc.getElementsByTagName("entry");
+    Array.prototype.forEach.call(en2,function(e){
+      var s=e.innerHTML||new XMLSerializer().serializeToString(e);
+      var m=/(?:v=|videos\/|video:)([\w-]{11})/.exec(s);
+      if(!m)return;
+      var ti=e.getElementsByTagName("title")[0],au=e.getElementsByTagName("name")[0];
+      out.push({id:m[1],title:ti?ti.textContent:m[1],author:au?au.textContent:"",
+        thumb:"https://i.ytimg.com/vi/"+m[1]+"/mqdefault.jpg"});
+    });
+    return out;
+  }
+
+  function show(items){
+    var g=$("grid");g.textContent="";
+    if(!items.length){msg("No videos found in the response.");return}
+    items.forEach(function(v){
+      var c=document.createElement("div");c.className="card";
+      var im=document.createElement("img");im.src=v.thumb;im.alt="";
+      var p=document.createElement("p");p.textContent=v.title;
+      var s=document.createElement("small");s.textContent=v.author;
+      c.appendChild(im);c.appendChild(p);c.appendChild(s);
+      c.onclick=function(){play(v)};
+      g.appendChild(c);
+    });
+  }
+
+  function run(paths){
+    msg("Loading...");
+    var i=0;
+    function next(lastErr){
+      if(i>=paths.length){msg("Failed.\n"+(lastErr?lastErr.message:""));return}
+      get(paths[i++]).then(function(t){
+        var items;
+        try{items=parse(t)}catch(e){return next(e)}
+        if(!items.length){return next(new Error("Response from "+server+paths[i-1]+" had no videos:\n"+t.slice(0,300)))}
+        msg("");show(items);
+      },next);
+    }
+    next();
+  }
+
+  function home(){
+    $("watch").style.display="none";$("list").style.display="block";
+    $("player").textContent="";
+    run(["feeds/api/standardfeeds/most_popular?alt=json",
+         "feeds/api/standardfeeds/most_popular",
+         "feeds/api/standardfeeds/us/most_popular"]);
+  }
+  function search(q){
+    $("watch").style.display="none";$("list").style.display="block";
+    $("player").textContent="";
+    var e=encodeURIComponent(q);
+    run(["feeds/api/videos?q="+e+"&alt=json","feeds/api/videos?q="+e]);
+  }
+
+  function play(v){
+    curId=v.id;msg("");
+    $("list").style.display="none";$("watch").style.display="block";
+    $("vt").textContent=v.title;
+    $("player").textContent="";
+    var f=document.createElement("iframe");
+    f.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(v.id)+"?autoplay=1";
+    f.allow="autoplay; encrypted-media; fullscreen";f.allowFullscreen=true;
+    $("player").appendChild(f);
+    window.scrollTo(0,0);
+  }
+
+  $("alt").onclick=function(){
+    if(!curId)return;
+    $("player").textContent="";
+    var vd=document.createElement("video");
+    vd.controls=true;vd.autoplay=true;
+    vd.src=server+"channel_fh264_getvideo?v="+encodeURIComponent(curId);
+    $("player").appendChild(vd);
+  };
+
+  $("f").onsubmit=function(e){e.preventDefault();var q=$("q").value.trim();if(q)search(q)};
+  $("home").onclick=function(){$("q").value="";home()};
+  $("back").onclick=function(){$("watch").style.display="none";$("list").style.display="block";$("player").textContent=""};
+  $("gear").onclick=function(){var s=$("settings");s.style.display=s.style.display==="block"?"none":"block"};
+  $("save").onclick=function(){
+    server=$("server").value.trim()||DEF;
+    if(!/\/$/.test(server))server+="/";
+    try{localStorage.setItem(KEY,server)}catch(e){}
+    $("settings").style.display="none";home();
+  };
+
+  home();
+})();
+</script>
+</body>
+</html>
