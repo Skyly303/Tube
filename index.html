@@ -59,15 +59,38 @@
 
   function msg(t){$("msg").textContent=t||""}
 
-  function get(path){
-    var url=server+path;
-    return fetch(url).then(function(r){
+  // Browsers block cross-origin calls unless the server allows them (CORS).
+  // If the direct call fails to connect, retry through public CORS proxies.
+  var PROXIES=[
+    function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u)},
+    function(u){return "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u)},
+    function(u){return "https://corsproxy.io/?url="+encodeURIComponent(u)},
+    function(u){return "https://thingproxy.freeboard.io/fetch/"+u}
+  ];
+  function tryUrl(url,shown){
+    var ac=new AbortController();
+    var timer=setTimeout(function(){ac.abort()},9000);
+    return fetch(url,{signal:ac.signal}).then(function(r){
+      clearTimeout(timer);
       return r.text().then(function(t){
-        if(!r.ok)throw new Error("HTTP "+r.status+" from "+url+"\n"+t.slice(0,300));
+        if(!r.ok)throw {http:true,message:"HTTP "+r.status+" from "+shown+"\n"+t.slice(0,300)};
         return t;
       });
-    },function(){
-      throw new Error("Could not reach "+url+"\n(Likely a CORS block, or the server is down. Open the URL in a new tab to check.)");
+    },function(e){clearTimeout(timer);throw e});
+  }
+  function get(path){
+    var url=server+path,n=0;
+    return tryUrl(url,url).catch(function(e){
+      if(e&&e.http)throw new Error(e.message);
+      function nextProxy(){
+        if(n>=PROXIES.length)throw new Error("Could not reach "+url+" (direct or through proxies). Likely CORS or the path is wrong.");
+        var p=PROXIES[n++](url);
+        return tryUrl(p,url).catch(function(e2){
+          if(e2&&e2.http&&n>=PROXIES.length)throw new Error(e2.message);
+          return nextProxy();
+        });
+      }
+      return nextProxy();
     });
   }
 
@@ -89,12 +112,23 @@
     var doc=new DOMParser().parseFromString(t,"text/xml");
     var en2=doc.getElementsByTagName("entry");
     Array.prototype.forEach.call(en2,function(e){
-      var s=e.innerHTML||new XMLSerializer().serializeToString(e);
-      var m=/(?:v=|videos\/|video:)([\w-]{11})/.exec(s);
-      if(!m)return;
+      var vid=e.getElementsByTagName("yt:videoid")[0];
+      var id=vid?vid.textContent.trim():"";
+      if(!id){
+        var m=/watch\?v=([\w-]{11})/.exec(new XMLSerializer().serializeToString(e));
+        if(m)id=m[1];
+      }
+      if(!id)return;
       var ti=e.getElementsByTagName("title")[0],au=e.getElementsByTagName("name")[0];
-      out.push({id:m[1],title:ti?ti.textContent:m[1],author:au?au.textContent:"",
-        thumb:"https://i.ytimg.com/vi/"+m[1]+"/mqdefault.jpg"});
+      var du=e.getElementsByTagName("yt:duration")[0],st=e.getElementsByTagName("yt:statistics")[0];
+      var sec=du?+du.getAttribute("seconds"):0;
+      var views=st?+st.getAttribute("viewCount"):0;
+      var info=[];
+      if(views)info.push(views.toLocaleString()+" views");
+      if(sec)info.push(Math.floor(sec/60)+":"+("0"+(sec%60)).slice(-2));
+      out.push({id:id,title:ti?ti.textContent:id,
+        author:(au?au.textContent:"")+(info.length?" - "+info.join(" - "):""),
+        thumb:"https://i.ytimg.com/vi/"+id+"/mqdefault.jpg"});
     });
     return out;
   }
@@ -131,9 +165,11 @@
   function home(){
     $("watch").style.display="none";$("list").style.display="block";
     $("player").textContent="";
-    run(["feeds/api/standardfeeds/most_popular?alt=json",
+    run(["feeds/api/standardfeeds/us/most_popular",
+         "feeds/api/standardfeeds/US/most_popular",
+         "feeds/api/standardfeeds/us/popular",
          "feeds/api/standardfeeds/most_popular",
-         "feeds/api/standardfeeds/us/most_popular"]);
+         "feeds/api/videos?q=trending"]);
   }
   function search(q){
     $("watch").style.display="none";$("list").style.display="block";
@@ -159,7 +195,7 @@
     $("player").textContent="";
     var vd=document.createElement("video");
     vd.controls=true;vd.autoplay=true;
-    vd.src=server+"channel_fh264_getvideo?v="+encodeURIComponent(curId);
+    vd.src=server+"getvideo/"+encodeURIComponent(curId);
     $("player").appendChild(vd);
   };
 
