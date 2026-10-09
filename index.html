@@ -3,214 +3,317 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tube</title>
+<title>TubeYou</title>
 <style>
-  body{margin:0;font-family:Arial,sans-serif;background:#111;color:#eee}
-  header{display:flex;gap:8px;align-items:center;padding:10px 14px;background:#1b1b1b;position:sticky;top:0}
-  header b{font-size:20px;cursor:pointer;color:#ff4d4d}
-  form{flex:1;display:flex;gap:6px}
-  input{flex:1;padding:8px;border-radius:6px;border:1px solid #444;background:#222;color:#eee;min-width:0}
-  button{padding:8px 12px;border-radius:6px;border:0;background:#333;color:#eee;cursor:pointer}
-  button:hover{background:#444}
-  main{padding:14px}
-  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
-  .card{cursor:pointer}
-  .card img{width:100%;aspect-ratio:16/9;object-fit:cover;background:#222;border-radius:8px}
-  .card p{margin:6px 0 0;font-size:14px}
-  .card small{color:#999}
-  #watch{display:none}
-  #player{width:100%;max-width:900px;aspect-ratio:16/9;background:#000}
-  #player iframe,#player video{width:100%;height:100%;border:0}
-  #msg{color:#ffb3b3;white-space:pre-wrap}
-  #settings{display:none;background:#1b1b1b;padding:12px;border-radius:8px;margin-bottom:14px}
-  pre{background:#000;padding:8px;overflow:auto;max-height:200px;font-size:12px}
+:root{--bg:#0f0f0f;--surface:#212121;--chip:#272727;--hover:#3f3f3f;--line:#303030;--text:#f1f1f1;--dim:#aaa;--blue:#3ea6ff;--r:12px}
+:root[data-theme=light]{--bg:#fff;--surface:#f2f2f2;--chip:#f0f0f0;--hover:#e2e2e2;--line:#e0e0e0;--text:#0f0f0f;--dim:#5f5f5f;--blue:#065fd4}
+:root[data-theme=red]{--bg:#1a0303;--surface:#2b0808;--chip:#3a0d0d;--hover:#4a1212;--line:#4a1212;--text:#f5e3e3;--dim:#c98f8f;--blue:#ff6b6b}
+:root[data-theme=blue]{--bg:#0a0f1c;--surface:#111a2e;--chip:#16233d;--hover:#1e3050;--line:#22304d;--text:#e8edf7;--dim:#8fa3c4;--blue:#4da3ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Roboto,Arial,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}img{display:block;max-width:100%}.hidden{display:none!important}
+header{position:sticky;top:0;z-index:40;height:56px;display:flex;align-items:center;gap:12px;padding:0 14px;background:var(--bg)}
+.ib{height:36px;padding:0 12px;background:var(--chip);border:0;border-radius:18px;font-weight:500}.ib:hover{background:var(--hover)}
+.logo{background:none;border:0;font-weight:700;font-size:20px;letter-spacing:-1px;display:flex;align-items:center;gap:6px;padding:0}
+.logo i{display:inline-block;width:28px;height:20px;background:#f00;border-radius:6px;position:relative}
+.logo i:after{content:"";position:absolute;left:11px;top:5px;border:5px solid transparent;border-left:9px solid #fff;border-right:0}
+form{flex:1;display:flex;max-width:640px;margin:0 auto}
+form input{flex:1;min-width:0;height:40px;padding:0 16px;background:var(--bg);border:1px solid var(--line);border-right:0;border-radius:20px 0 0 20px;color:var(--text);font-size:16px}
+form button{width:64px;height:40px;background:var(--chip);border:1px solid var(--line);border-radius:0 20px 20px 0}
+main{padding:8px 24px 64px}
+.grid{display:grid;gap:36px 16px;grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
+.card,.sidecard{background:none;border:0;padding:0;text-align:left;display:flex;gap:10px}.card{flex-direction:column}
+.thumb{position:relative;aspect-ratio:16/9;background:var(--surface);border-radius:var(--r);overflow:hidden}
+.card .thumb{width:100%}.thumb img{width:100%;height:100%;object-fit:cover}
+.dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.8);color:#fff;padding:1px 4px;border-radius:4px;font-size:12px}
+.cardtitle{font-size:16px;font-weight:500;margin:0 0 4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cardsub{color:var(--dim);margin:0;display:block}
+.sidecard{margin-bottom:10px}.sidecard .thumb{flex:0 0 168px;width:168px;border-radius:8px}.sidecard .cardtitle{font-size:14px}
+.center{padding:70px 16px;text-align:center;color:var(--dim)}
+.spin{width:34px;height:34px;margin:auto;border:3px solid var(--line);border-top-color:var(--text);border-radius:50%;animation:s .8s linear infinite}@keyframes s{to{transform:rotate(360deg)}}
+.pill{height:36px;padding:0 16px;background:var(--chip);border:0;border-radius:18px;font-weight:500;display:inline-flex;align-items:center;gap:8px}.pill:hover{background:var(--hover)}
+.pill.liked{color:#ff4757}
+.sub{height:36px;padding:0 18px;border:0;border-radius:18px;font-weight:600;background:#f00;color:#fff}.sub.on{background:var(--chip);color:var(--text)}
+.head1{font-size:16px;font-weight:400;color:var(--dim);margin:8px 0 20px}.head1 b{color:var(--text)}
+.watch{display:grid;grid-template-columns:minmax(0,1fr) 402px;gap:24px;max-width:1754px;margin:0 auto;padding-top:12px}
+.player{aspect-ratio:16/9;background:#000;border-radius:var(--r);overflow:hidden}.player iframe{width:100%;height:100%;border:0}
+h1.vt{font-size:20px;margin:12px 0}.row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0}
+.own{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;text-align:left}
+.av{width:40px;height:40px;border-radius:50%;background:var(--chip);display:grid;place-items:center;font-weight:700;flex:0 0 40px}
+.desc{background:var(--chip);border-radius:var(--r);padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer}
+.desc.c{max-height:4.4em;overflow:hidden}
+h2.sec{font-size:18px;margin:22px 0 14px}.cm{display:flex;gap:14px;margin-bottom:14px}.cm img,.cm .av{width:40px;height:40px;border-radius:50%;flex:0 0 40px}
+.cm p{margin:2px 0}.cm small{color:var(--dim)}.src{color:var(--dim);font-size:12px;margin:0 0 12px}
+.srow{display:flex;align-items:center;gap:14px;width:100%;padding:12px 8px;background:none;border:0;border-bottom:1px solid var(--line);text-align:left}.srow:hover{background:var(--chip)}
+.back{background:none;border:0;color:var(--dim);font-weight:500;padding:0;margin-bottom:12px}
+.chead{display:flex;align-items:center;gap:18px;padding:16px 0;border-bottom:1px solid var(--line);margin-bottom:22px}.chead .av{width:72px;height:72px;font-size:28px;flex-basis:72px}.chead h1{margin:0 0 4px}.chead img{width:72px;height:72px;border-radius:50%}
+.side{position:fixed;top:0;left:0;bottom:0;z-index:61;width:250px;background:var(--surface);padding:8px;transform:translateX(-100%);transition:transform .25s}.side.open{transform:none}
+.scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5)}
+.side button{display:block;width:100%;padding:12px;background:none;border:0;border-radius:10px;text-align:left;font-size:15px}.side button:hover{background:var(--hover)}
+.dlg{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.75);display:grid;place-items:center;padding:20px}
+.panel{width:100%;max-width:420px;background:var(--surface);border-radius:var(--r);padding:22px}.panel h2{margin:0 0 14px}.panel label{display:block;font-weight:500;margin:14px 0 6px}
+.panel select{width:100%;height:40px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:0 8px}
+.themes{display:flex;gap:8px}.themes button{flex:1;height:44px;border-radius:8px;border:1px solid var(--line);font-weight:500}.themes button.on{outline:2px solid var(--blue)}
+@media(max-width:1015px){.watch{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:656px){main{padding:8px 12px 48px}.grid{grid-template-columns:1fr}.logo b{display:none}.sidecard{flex-direction:column}.sidecard .thumb{width:100%;flex:none}}
 </style>
 </head>
 <body>
+<div class="scrim hidden" id="scrim"></div>
+<nav class="side" id="side">
+  <button id="n-set">Settings</button><button id="n-like">Liked videos</button><button id="n-subs">Subscribed</button>
+</nav>
 <header>
-  <b id="home">Tube</b>
-  <form id="f"><input id="q" placeholder="Search" autocomplete="off"><button>Search</button></form>
-  <button id="gear" type="button">Server</button>
+  <button class="ib" id="menu" aria-label="Menu">&#9776;</button>
+  <button class="logo" id="home"><i></i><b>TubeYou</b></button>
+  <form id="f"><input id="q" type="search" placeholder="Search or paste a YouTube link" autocomplete="off"><button aria-label="Search">&#128269;</button></form>
+  <button class="ib" id="gear">Settings</button>
 </header>
 <main>
-  <div id="settings">
-    <label>TubeRepair server URL<br>
-      <input id="server" value="https://tuberepair.uptimetrackers.com/" style="width:100%;margin-top:4px"></label>
-    <p><button id="save" type="button">Save</button></p>
-  </div>
-  <div id="msg"></div>
-  <div id="list"><div id="grid"></div></div>
-  <div id="watch">
-    <button id="back" type="button">&larr; Back</button>
-    <h2 id="vt"></h2>
-    <div id="player"></div>
-    <p><button id="alt" type="button">Try TubeRepair stream instead</button></p>
-  </div>
+  <section id="v-browse">
+    <h1 class="head1 hidden" id="rf"></h1>
+    <div class="grid" id="grid"></div><div id="bst"></div>
+  </section>
+  <section id="v-watch" class="hidden">
+    <div class="watch"><div>
+      <div class="player" id="player"></div>
+      <h1 class="vt" id="vt"></h1>
+      <div class="row">
+        <button class="own" id="own"><div class="av" id="oav"></div><div><b id="oname"></b><div class="cardsub" id="osubs"></div></div></button>
+        <button class="sub hidden" id="sub">Subscribe</button>
+        <button class="pill" id="like">&#9825; <span id="lc">Like</span></button>
+        <a class="pill" id="yt" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">Open on YouTube</a>
+      </div>
+      <div class="desc c" id="desc"></div>
+      <h2 class="sec">Comments</h2><div id="cms"></div>
+    </div><aside id="rel"></aside></div>
+  </section>
+  <section id="v-chan" class="hidden">
+    <button class="back" data-home>&larr; Back</button><div class="chead" id="chead"></div><div class="grid" id="cgrid"></div><div id="cst"></div>
+  </section>
+  <section id="v-liked" class="hidden">
+    <button class="back" data-home>&larr; Back</button><h1 class="head1"><b>Liked videos</b></h1><div class="grid" id="lgrid"></div><div id="lst"></div>
+  </section>
+  <section id="v-subs" class="hidden">
+    <button class="back" data-home>&larr; Back</button><h1 class="head1"><b>Subscriptions</b></h1><div id="slist"></div>
+  </section>
 </main>
+<div class="dlg hidden" id="dlg"><div class="panel">
+  <h2>Settings</h2>
+  <label for="reg">Home feed country</label>
+  <select id="reg"><option value="SE">Sweden</option><option value="US">United States</option><option value="GB">United Kingdom</option><option value="DE">Germany</option><option value="NO">Norway</option><option value="DK">Denmark</option><option value="FI">Finland</option><option value="FR">France</option><option value="ES">Spain</option><option value="IT">Italy</option><option value="NL">Netherlands</option><option value="PL">Poland</option><option value="BR">Brazil</option><option value="IN">India</option><option value="JP">Japan</option><option value="KR">South Korea</option><option value="AU">Australia</option><option value="CA">Canada</option></select>
+  <label>Theme</label>
+  <div class="themes" id="themes"><button data-t="dark">Dark</button><button data-t="light">Light</button><button data-t="red">Red</button><button data-t="blue">Blue</button></div>
+  <p style="text-align:right;margin:20px 0 0"><button class="pill" id="close">Done</button></p>
+</div></div>
+
 <script>
 (function(){
-  var $=function(i){return document.getElementById(i)};
-  var KEY="tube.server", DEF="https://tuberepair.uptimetrackers.com/";
-  var server=DEF;
-  try{server=localStorage.getItem(KEY)||DEF}catch(e){}
-  if(!/\/$/.test(server))server+="/";
-  $("server").value=server;
-  var curId=null;
+"use strict";
+// Public Piped + Invidious instances, all tried at once; first good reply wins.
+var PIPED=["https://pipedapi.kavin.rocks","https://api.piped.private.coffee","https://pipedapi.adminforge.de"];
+var INV=["https://inv.nadeko.net"];
+var K={reg:"ty.region",theme:"ty.theme",liked:"ty.liked",subs:"ty.subs"};
+var region="SE",tok=0,cur=null,SRC="";
+function $(i){return document.getElementById(i)}
+function el(t,c,x){var n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n}
+function rd(k){try{return localStorage.getItem(k)||""}catch(e){return ""}}
+function wr(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function lst(k){try{var a=JSON.parse(rd(k)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function vis(n,y){n.classList.toggle("hidden",!y)}
+function t1(x){return(x<10?x.toFixed(1):""+Math.round(x)).replace(/\.0$/,"")}
+function compact(n){n=Number(n);if(!isFinite(n)||n<0)return"";if(n<1e3)return""+n;if(n<1e6)return t1(n/1e3)+"K";if(n<1e9)return t1(n/1e6)+"M";return t1(n/1e9)+"B"}
+function dur(s){s=+s;if(!s)return"";var h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60,p=function(x){return x<10?"0"+x:""+x};return h?h+":"+p(m)+":"+p(c):m+":"+p(c)}
+function plain(h){h=String(h||"").replace(/<br\s*\/?>/gi,"\n");return new DOMParser().parseFromString(h,"text/html").body.textContent}
 
-  function msg(t){$("msg").textContent=t||""}
-
-  // Browsers block cross-origin calls unless the server allows them (CORS).
-  // If the direct call fails to connect, retry through public CORS proxies.
-  var PROXIES=[
-    function(u){return "https://api.allorigins.win/raw?url="+encodeURIComponent(u)},
-    function(u){return "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u)},
-    function(u){return "https://corsproxy.io/?url="+encodeURIComponent(u)},
-    function(u){return "https://thingproxy.freeboard.io/fetch/"+u}
-  ];
-  function tryUrl(url,shown){
-    var ac=new AbortController();
-    var timer=setTimeout(function(){ac.abort()},9000);
-    return fetch(url,{signal:ac.signal}).then(function(r){
-      clearTimeout(timer);
-      return r.text().then(function(t){
-        if(!r.ok)throw {http:true,message:"HTTP "+r.status+" from "+shown+"\n"+t.slice(0,300)};
-        return t;
-      });
-    },function(e){clearTimeout(timer);throw e});
-  }
-  function get(path){
-    var url=server+path,n=0;
-    return tryUrl(url,url).catch(function(e){
-      if(e&&e.http)throw new Error(e.message);
-      function nextProxy(){
-        if(n>=PROXIES.length)throw new Error("Could not reach "+url+" (direct or through proxies). Likely CORS or the path is wrong.");
-        var p=PROXIES[n++](url);
-        return tryUrl(p,url).catch(function(e2){
-          if(e2&&e2.http&&n>=PROXIES.length)throw new Error(e2.message);
-          return nextProxy();
-        });
-      }
-      return nextProxy();
+/* ---------- data layer ---------- */
+function getJson(u){
+  var ac=new AbortController(),t=setTimeout(function(){ac.abort()},9000);
+  return fetch(u,{signal:ac.signal}).then(function(r){clearTimeout(t);if(!r.ok)throw new Error("HTTP "+r.status);return r.json()},function(e){clearTimeout(t);throw e});
+}
+function ask(pp,ip,f){
+  var tr=PIPED.map(function(h){return{h:h,u:h+pp}}).concat(INV.map(function(h){return{h:h,u:h+ip}})),won=false;
+  return Promise.any(tr.map(function(t){
+    return getJson(t.u).then(function(j){
+      var r=f(j);
+      if(!r||(Array.isArray(r)&&!r.length))throw new Error("empty");
+      if(!won){won=true;SRC=t.h.split("//")[1]}
+      return r;
     });
-  }
+  }));
+}
+function nv(x){
+  var m=x.url&&/v=([\w-]{11})/.exec(x.url),id=x.videoId||(m&&m[1]);if(!id)return null;
+  var cm=x.uploaderUrl&&/channel\/([\w-]+)/.exec(x.uploaderUrl);
+  return{id:id,title:x.title||id,author:x.author||x.uploaderName||"",cid:x.authorId||(cm&&cm[1])||"",
+    views:x.viewCount!=null?x.viewCount:x.views,dur:x.lengthSeconds!=null?x.lengthSeconds:x.duration,when:x.publishedText||x.uploadedDate||""};
+}
+function listN(j){return(Array.isArray(j)?j:(j.items||[])).map(nv).filter(Boolean)}
+function detN(j){
+  var cm=j.uploaderUrl&&/channel\/([\w-]+)/.exec(j.uploaderUrl);
+  if(!j.title)return null;
+  return{desc:plain(j.description),likes:j.likes!=null?j.likes:j.likeCount,views:j.views!=null?j.views:j.viewCount,
+    author:j.uploader||j.author||"",cid:(cm&&cm[1])||j.authorId||"",subs:j.uploaderSubscriberCount!=null?compact(j.uploaderSubscriberCount)+" subscribers":(j.subCountText||""),
+    rel:(j.relatedStreams||j.recommendedVideos||[]).map(nv).filter(Boolean)};
+}
+function comN(j){
+  var a=(j.comments||[]).map(function(c){return{name:(c.author||"").replace(/^@/,""),text:plain(c.commentText||c.content),likes:c.likeCount,when:c.commentedTime||c.publishedText||"",
+    img:c.thumbnail||(c.authorThumbnails&&c.authorThumbnails[0]&&c.authorThumbnails[0].url)||""}});
+  return a;
+}
+function chN(j){
+  var name=j.name||j.author;if(!name)return null;
+  return{name:name,img:j.avatarUrl||(j.authorThumbnails&&j.authorThumbnails[j.authorThumbnails.length-1]&&j.authorThumbnails[j.authorThumbnails.length-1].url)||"",
+    subs:j.subscriberCount!=null?compact(j.subscriberCount)+" subscribers":(j.subCount!=null?compact(j.subCount)+" subscribers":""),
+    vids:(j.relatedStreams||j.latestVideos||[]).map(nv).filter(Boolean)};
+}
 
-  // Parse either Atom XML or GData JSON into [{id,title,author,thumb}]
-  function parse(text){
-    var out=[],t=text.trim();
-    if(t.charAt(0)==="{"){
-      var j=JSON.parse(t),en=(j.feed&&j.feed.entry)||[];
-      en.forEach(function(e){
-        var id="",s=JSON.stringify(e.link||"")+JSON.stringify(e.id||"");
-        var m=/(?:v=|videos\/)([\w-]{11})/.exec(s);if(m)id=m[1];
-        var th=e.media$group&&e.media$group.media$thumbnail&&e.media$group.media$thumbnail[0];
-        if(id)out.push({id:id,title:(e.title&&e.title.$t)||id,
-          author:(e.author&&e.author[0]&&e.author[0].name.$t)||"",
-          thumb:th?th.url:"https://i.ytimg.com/vi/"+id+"/mqdefault.jpg"});
-      });
-      return out;
+/* ---------- ui helpers ---------- */
+function spinner(n){n.textContent="";var c=el("div","center");c.appendChild(el("div","spin"));n.appendChild(c)}
+function fail(n,msg,retry){
+  n.textContent="";var c=el("div","center");c.appendChild(el("p",null,msg));
+  if(retry){var b=el("button","pill","Try again");b.onclick=retry;c.appendChild(b)}n.appendChild(c);
+}
+function aerr(e){return"Could not load from any service. They may be down or blocking requests right now."+(e&&e.errors?"\n("+e.errors.map(function(x){return x.message}).join(", ")+")":"")}
+function card(v,small){
+  var b=el("button",small?"sidecard":"card");b.type="button";
+  var th=el("div","thumb"),im=el("img");im.loading="lazy";im.alt="";im.src="https://i.ytimg.com/vi/"+v.id+"/mqdefault.jpg";th.appendChild(im);
+  var d=dur(v.dur);if(d)th.appendChild(el("span","dur",d));
+  var tx=el("div");tx.appendChild(el("h3","cardtitle",v.title));tx.appendChild(el("span","cardsub",v.author));
+  var m=[],vv=compact(v.views);if(vv)m.push(vv+" views");if(v.when)m.push(v.when);
+  tx.appendChild(el("span","cardsub",m.join("  •  ")));
+  b.appendChild(th);b.appendChild(tx);b.onclick=function(){openVideo(v)};return b;
+}
+function views(name){
+  if(name!=="watch")$("player").textContent="";
+  ["browse","watch","chan","liked","subs"].forEach(function(n){vis($("v-"+n),n===name)});
+  window.scrollTo(0,0);
+}
+function fill(grid,st,p,more){
+  var my=++tok;grid.textContent="";spinner(st);
+  p.then(function(items){
+    if(my!==tok)return;st.textContent="";
+    var s=el("p","src","Loaded via "+SRC);st.appendChild(s);
+    items.forEach(function(v){grid.appendChild(card(v))});
+  }).catch(function(e){if(my===tok)fail(st,aerr(e),more)});
+}
+
+/* ---------- browse ---------- */
+function goHome(){
+  $("q").value="";vis($("rf"),false);views("browse");
+  fill($("grid"),$("bst"),ask("/trending?region="+region,"/api/v1/trending?region="+region,listN),goHome);
+}
+function doSearch(q){
+  var m=/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/.exec(q)||/^([\w-]{11})$/.exec(q);
+  if(m){openVideo({id:m[1],title:"Video",author:"",cid:""});return}
+  var h=$("rf");h.textContent="Results for ";h.appendChild(el("b",null,q));vis(h,true);views("browse");
+  var e=encodeURIComponent(q);
+  fill($("grid"),$("bst"),ask("/search?q="+e+"&filter=videos","/api/v1/search?q="+e+"&type=video",listN),function(){doSearch(q)});
+}
+
+/* ---------- likes / subs ---------- */
+function isLiked(id){return lst(K.liked).some(function(s){return s.id===id})}
+function isSub(id){return lst(K.subs).some(function(s){return s.id===id})}
+function wireSub(btn,c){
+  function r(){var s=isSub(c.id);btn.textContent=s?"Subscribed":"Subscribe";btn.classList.toggle("on",s)}
+  r();btn.onclick=function(){var l=lst(K.subs).filter(function(s){return s.id!==c.id});if(!isSub(c.id))l.unshift(c);wr(K.subs,JSON.stringify(l));r()};
+}
+
+/* ---------- watch ---------- */
+function openVideo(v){
+  cur=v;views("watch");
+  var f=el("iframe");f.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(v.id)+"?autoplay=1&rel=0";
+  f.allow="autoplay; encrypted-media; picture-in-picture; fullscreen";f.allowFullscreen=true;f.title="Video player";
+  $("player").textContent="";$("player").appendChild(f);
+  $("vt").textContent=v.title;$("oname").textContent=v.author;$("osubs").textContent="";$("oav").textContent=(v.author||"?").charAt(0).toUpperCase();
+  $("desc").textContent="Loading…";$("desc").classList.add("c");$("cms").textContent="";$("rel").textContent="";
+  vis($("sub"),false);$("yt").href="https://www.youtube.com/watch?v="+v.id;$("lc").textContent="Like";
+  var lk=$("like");
+  function r(){var l=isLiked(v.id);lk.classList.toggle("liked",l);lk.firstChild.nodeValue=l?"\u2665 ":"\u2661 "}
+  r();lk.onclick=function(){var l=lst(K.liked).filter(function(s){return s.id!==v.id});if(!isLiked(v.id))l.unshift(v);wr(K.liked,JSON.stringify(l));r()};
+
+  ask("/streams/"+v.id,"/api/v1/videos/"+v.id,detN).then(function(d){
+    if(!cur||cur.id!==v.id)return;
+    $("desc").textContent=d.desc||"No description.";
+    if(d.author){$("oname").textContent=d.author;$("oav").textContent=d.author.charAt(0).toUpperCase()}
+    $("osubs").textContent=d.subs;
+    if(d.likes!=null&&d.likes>=0)$("lc").textContent=compact(d.likes);
+    var cid=d.cid||v.cid;
+    if(cid){
+      $("own").onclick=function(){openChannel(cid,d.author)};
+      var sb=$("sub");vis(sb,true);wireSub(sb,{id:cid,title:d.author||v.author});
     }
-    var doc=new DOMParser().parseFromString(t,"text/xml");
-    var en2=doc.getElementsByTagName("entry");
-    Array.prototype.forEach.call(en2,function(e){
-      var vid=e.getElementsByTagName("yt:videoid")[0];
-      var id=vid?vid.textContent.trim():"";
-      if(!id){
-        var m=/watch\?v=([\w-]{11})/.exec(new XMLSerializer().serializeToString(e));
-        if(m)id=m[1];
-      }
-      if(!id)return;
-      var ti=e.getElementsByTagName("title")[0],au=e.getElementsByTagName("name")[0];
-      var du=e.getElementsByTagName("yt:duration")[0],st=e.getElementsByTagName("yt:statistics")[0];
-      var sec=du?+du.getAttribute("seconds"):0;
-      var views=st?+st.getAttribute("viewCount"):0;
-      var info=[];
-      if(views)info.push(views.toLocaleString()+" views");
-      if(sec)info.push(Math.floor(sec/60)+":"+("0"+(sec%60)).slice(-2));
-      out.push({id:id,title:ti?ti.textContent:id,
-        author:(au?au.textContent:"")+(info.length?" - "+info.join(" - "):""),
-        thumb:"https://i.ytimg.com/vi/"+id+"/mqdefault.jpg"});
-    });
-    return out;
-  }
-
-  function show(items){
-    var g=$("grid");g.textContent="";
-    if(!items.length){msg("No videos found in the response.");return}
-    items.forEach(function(v){
-      var c=document.createElement("div");c.className="card";
-      var im=document.createElement("img");im.src=v.thumb;im.alt="";
-      var p=document.createElement("p");p.textContent=v.title;
-      var s=document.createElement("small");s.textContent=v.author;
-      c.appendChild(im);c.appendChild(p);c.appendChild(s);
-      c.onclick=function(){play(v)};
-      g.appendChild(c);
-    });
-  }
-
-  function run(paths){
-    msg("Loading...");
-    var i=0;
-    function next(lastErr){
-      if(i>=paths.length){msg("Failed.\n"+(lastErr?lastErr.message:""));return}
-      get(paths[i++]).then(function(t){
-        var items;
-        try{items=parse(t)}catch(e){return next(e)}
-        if(!items.length){return next(new Error("Response from "+server+paths[i-1]+" had no videos:\n"+t.slice(0,300)))}
-        msg("");show(items);
-      },next);
+    if(d.rel.length){
+      var rel=$("rel");rel.textContent="";rel.appendChild(el("h2","sec","Up next"));
+      d.rel.slice(0,14).forEach(function(x){rel.appendChild(card(x,true))});
     }
-    next();
-  }
+  }).catch(function(){if(cur&&cur.id===v.id)$("desc").textContent="Details are unavailable right now, but the video should still play."});
 
-  function home(){
-    $("watch").style.display="none";$("list").style.display="block";
-    $("player").textContent="";
-    run(["feeds/api/standardfeeds/us/most_popular",
-         "feeds/api/standardfeeds/US/most_popular",
-         "feeds/api/standardfeeds/us/popular",
-         "feeds/api/standardfeeds/most_popular",
-         "feeds/api/videos?q=trending"]);
-  }
-  function search(q){
-    $("watch").style.display="none";$("list").style.display="block";
-    $("player").textContent="";
-    var e=encodeURIComponent(q);
-    run(["feeds/api/videos?q="+e+"&alt=json","feeds/api/videos?q="+e]);
-  }
+  ask("/comments/"+v.id,"/api/v1/comments/"+v.id,comN).then(function(cs){
+    if(!cur||cur.id!==v.id)return;
+    var box=$("cms");box.textContent="";
+    cs.slice(0,20).forEach(function(c){
+      var row=el("div","cm"),a;
+      if(c.img){a=el("img");a.alt="";a.src=c.img;a.loading="lazy"}else a=el("div","av",(c.name||"?").charAt(0).toUpperCase());
+      var b=el("div"),h=el("p",null,c.name);h.style.fontWeight="500";h.style.fontSize="13px";
+      if(c.when){var s=el("small","", "  "+c.when);h.appendChild(s)}
+      b.appendChild(h);var t=el("p",null,c.text);t.style.whiteSpace="pre-wrap";t.style.overflowWrap="anywhere";b.appendChild(t);
+      if(c.likes)b.appendChild(el("small",null,compact(c.likes)+" likes"));
+      row.appendChild(a);row.appendChild(b);box.appendChild(row);
+    });
+  }).catch(function(){if(cur&&cur.id===v.id)$("cms").appendChild(el("p","cardsub","Comments are unavailable."))});
+}
+$("desc").onclick=function(){this.classList.toggle("c")};
 
-  function play(v){
-    curId=v.id;msg("");
-    $("list").style.display="none";$("watch").style.display="block";
-    $("vt").textContent=v.title;
-    $("player").textContent="";
-    var f=document.createElement("iframe");
-    f.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(v.id)+"?autoplay=1";
-    f.allow="autoplay; encrypted-media; fullscreen";f.allowFullscreen=true;
-    $("player").appendChild(f);
-    window.scrollTo(0,0);
-  }
+/* ---------- channel / liked / subs ---------- */
+function openChannel(id,name){
+  views("chan");var h=$("chead");h.textContent="";var g=$("cgrid");g.textContent="";spinner($("cst"));
+  ask("/channel/"+id,"/api/v1/channels/"+id,chN).then(function(c){
+    $("cst").textContent="";
+    var a;if(c.img){a=el("img");a.alt="";a.src=c.img}else a=el("div","av",c.name.charAt(0).toUpperCase());
+    var b=el("div");b.style.flex="1";var t=el("h1",null,c.name);b.appendChild(t);b.appendChild(el("span","cardsub",c.subs));
+    var sb=el("button","sub");wireSub(sb,{id:id,title:c.name,thumb:c.img});
+    h.appendChild(a);h.appendChild(b);h.appendChild(sb);
+    c.vids.forEach(function(v){if(!v.cid)v.cid=id;if(!v.author)v.author=c.name;g.appendChild(card(v))});
+  }).catch(function(e){fail($("cst"),aerr(e),function(){openChannel(id,name)})});
+}
+function showLiked(){
+  views("liked");var g=$("lgrid");g.textContent="";var l=lst(K.liked),st=$("lst");st.textContent="";
+  if(!l.length){fail(st,"No liked videos yet. Tap Like on a video to save it here.");return}
+  l.forEach(function(v){g.appendChild(card(v))});
+}
+function showSubs(){
+  views("subs");var box=$("slist");box.textContent="";var l=lst(K.subs);
+  if(!l.length){fail(box,"You haven't subscribed to any channels yet.");return}
+  l.forEach(function(c){
+    var r=el("button","srow");r.type="button";r.appendChild(el("div","av",(c.title||"?").charAt(0).toUpperCase()));r.appendChild(el("span",null,c.title));
+    r.onclick=function(){openChannel(c.id,c.title)};box.appendChild(r);
+  });
+}
 
-  $("alt").onclick=function(){
-    if(!curId)return;
-    $("player").textContent="";
-    var vd=document.createElement("video");
-    vd.controls=true;vd.autoplay=true;
-    vd.src=server+"getvideo/"+encodeURIComponent(curId);
-    $("player").appendChild(vd);
-  };
+/* ---------- settings / theme / wiring ---------- */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme",t);wr(K.theme,t);
+  Array.prototype.forEach.call(document.querySelectorAll("#themes button"),function(b){b.classList.toggle("on",b.dataset.t===t)});
+}
+function side(open){vis($("scrim"),open);$("side").classList.toggle("open",open)}
+function dlg(open){vis($("dlg"),open);if(open)$("reg").value=region}
+$("f").onsubmit=function(e){e.preventDefault();var q=$("q").value.trim();if(q)doSearch(q)};
+$("home").onclick=goHome;
+Array.prototype.forEach.call(document.querySelectorAll("[data-home]"),function(b){b.onclick=goHome});
+$("menu").onclick=function(){side(!$("side").classList.contains("open"))};
+$("scrim").onclick=function(){side(false)};
+$("n-set").onclick=function(){side(false);dlg(true)};
+$("n-like").onclick=function(){side(false);showLiked()};
+$("n-subs").onclick=function(){side(false);showSubs()};
+$("gear").onclick=function(){dlg(true)};
+$("close").onclick=function(){dlg(false)};
+$("reg").onchange=function(){region=this.value;wr(K.reg,region);dlg(false);goHome()};
+Array.prototype.forEach.call(document.querySelectorAll("#themes button"),function(b){b.onclick=function(){applyTheme(b.dataset.t)}});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){side(false);dlg(false)}});
 
-  $("f").onsubmit=function(e){e.preventDefault();var q=$("q").value.trim();if(q)search(q)};
-  $("home").onclick=function(){$("q").value="";home()};
-  $("back").onclick=function(){$("watch").style.display="none";$("list").style.display="block";$("player").textContent=""};
-  $("gear").onclick=function(){var s=$("settings");s.style.display=s.style.display==="block"?"none":"block"};
-  $("save").onclick=function(){
-    server=$("server").value.trim()||DEF;
-    if(!/\/$/.test(server))server+="/";
-    try{localStorage.setItem(KEY,server)}catch(e){}
-    $("settings").style.display="none";home();
-  };
-
-  home();
+region=rd(K.reg)||"SE";
+applyTheme(rd(K.theme)||"dark");
+goHome();
 })();
 </script>
 </body>
